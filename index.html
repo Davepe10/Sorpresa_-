@@ -17,6 +17,11 @@
 .audio-panel{width:min(100%,390px);margin:18px auto 10px;padding:14px;background:#ffffff0d;border:1px solid #e7c99555;border-radius:18px}.audio-heading{font-weight:600;color:#f0d5a6;margin-bottom:10px}.yt-visible{width:100%;min-height:185px;border-radius:12px;overflow:hidden}.yt-visible iframe{display:block;width:100%;height:195px;border:0}.audio-note{font-size:12px;color:#cfc9bf;line-height:1.5}.audio-upload{display:inline-block;cursor:pointer;padding:10px 14px;background:#c4a373;color:#0d1827;border-radius:12px;font-weight:600;margin-top:6px}.audio-upload:hover{filter:brightness(1.1)}
 
 .youtube-audio-shell{position:fixed;left:-10000px;top:0;width:240px;height:240px;overflow:hidden;pointer-events:none;opacity:0}.youtube-audio-shell iframe{width:240px!important;height:240px!important}.heart{z-index:9999!important;pointer-events:none!important}
+.heart{position:fixed!important;z-index:2147483647!important;
+    display:block!important;visibility:visible!important;
+    pointer-events:none!important;will-change:transform,opacity}
+    @media(max-width:600px){.heart{filter:drop-shadow(0 2px 5px #0007)}}
+    .heart{z-index:999999!important;visibility:visible!important;display:block!important;pointer-events:none!important}
 </style></head><body>
 <section id="login" class="screen active"><div class="panel"><div class="eyebrow">Archivo confidencial · 001</div><h1>🔒 Acceso exclusivo</h1><p>Mmm... ¿y tú quién eres? 👀<br>Este lugar no está disponible para cualquiera.<br>Si eres quien creo que eres, sabrás cómo entrar.</p><form id="loginForm"><label for="password">Introduce la contraseña secreta</label><input id="password" type="password" autocomplete="off" placeholder="Tu clave aquí..." required><button class="primary" type="submit">🔓 Desbloquear</button></form><div class="error" id="loginError" aria-live="polite"></div></div></section>
 <section id="music" class="screen"><div class="record-layout"><div class="eyebrow" id="phase">CAPÍTULO 01</div><div class="deck" aria-label="Tocadiscos con vinilo giratorio"><div class="platter"><div class="vinyl" id="vinyl"><img id="cover" alt="Un recuerdo de nosotros"></div></div><div class="arm" id="arm"><div class="needle"></div></div><span class="deck-badge">just for you ♡</span></div><div class="controls"><button id="prev" class="round" aria-label="Capítulo anterior">⏮</button><button id="playBtn" class="primary">Poner música ▶️</button><button id="next" class="round" aria-label="Siguiente capítulo">⏭</button></div><div class="photo-count" id="photoCount"></div><div class="memory-film" aria-label="Recuerdos en movimiento"><img id="filmA" alt="Recuerdo de Cami" class="active"><img id="filmB" alt="Otro recuerdo de Cami"><span class="film-label">✦ pequeños momentos, grandes recuerdos</span><span class="film-counter" id="filmCounter">01 / 09</span></div><h2 id="songTitle"></h2><p class="phase-desc" id="description"></p><div class="dots" id="dots"></div><p id="status" class="subtle" role="status"></p><button id="surpriseBtn" class="secondary next-surprise">Cami, tengo algo más para ti... 💌</button></div></section>
@@ -31,7 +36,7 @@ const songs=[
  {title:'Mi debilidad tiene nombre',desc:`Tengo que confesarte algo...\n\nMe encanta cuando te ríes, especialmente cuando intento hacerme el gracioso y terminas riéndote de mis tonterías.\n\nMe gustan tus ocurrencias, tus gestos y esos pequeños detalles tuyos que quizá ni tú misma notas.\n\nLo que quizá no sabes es lo mucho que me gusta verte feliz. ❤️`,id:'wEaiJC4X9_Q',photos:PHOTOS.slice(3,6)},
  {title:'Todavía nos quedan muchas canciones',desc:`Todavía nos quedan lugares por conocer, fotos por tomar, canciones por dedicar y momentos que algún día recordaremos sonriendo.\n\nNo sé cuál será nuestra próxima aventura, pero tengo la sospecha de que contigo va a ser bastante divertida.\n\nSobre todo si incluye comida, abrazos y uno que otro besito robado. 😏❤️`,id:'kgUVq-ICt_Y',photos:PHOTOS.slice(6,9)}
 ];
-let index=0,photoIndex=0,playing=false,player=null,apiReady=false,heartTimer=null,photoTimer=null,filmTimer=null,filmPosition=0,filmFront=true,pendingPlay=false;
+let index=0,photoIndex=0,playing=false,player=null,apiReady=false,heartTimer=null,photoTimer=null,filmTimer=null,filmPosition=0,filmFront=true;
 const $=id=>document.getElementById(id);
 function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('active',x.id===id));window.scrollTo(0,0)}
 $('loginForm').addEventListener('submit',e=>{e.preventDefault();if($('password').value.trim().toLocaleLowerCase()==SECRET_KEY){$('loginError').textContent='🐼 Identidad confirmada... qué suerte la mía. 😏';setTimeout(()=>show('music'),1000)}else{$('loginError').textContent='Mmm... sospechoso. 🤨 ¿Segura que eres tú?';alert('¡Clave incorrecta! Inténtalo de nuevo, tramposa. 👀')}});
@@ -41,41 +46,61 @@ function filmNext(){filmPosition=(filmPosition+1)%PHOTOS.length;let incoming=fil
 function setPhoto(){$('cover').src=songs[index].photos[photoIndex];$('photoCount').textContent=(photoIndex+1)+' / 3'}
 function nextPhoto(){photoIndex=(photoIndex+1)%3;setPhoto()}
 function heart(){let h=document.createElement('span');h.className='heart';h.textContent=Math.random()<.2?'✨':'❤️';h.style.left=Math.random()*100+'vw';h.style.setProperty('--size',(16+Math.random()*24)+'px');let duration=5+Math.random()*4;h.style.setProperty('--duration',duration+'s');h.style.setProperty('--opacity',(.5+Math.random()*.5));h.style.setProperty('--drift',((Math.random()-.5)*180)+'px');document.body.appendChild(h);setTimeout(()=>h.remove(),duration*1000+200)}
-function setPlaying(v){playing=v;$('vinyl').classList.toggle('playing',v);$('arm').classList.toggle('playing',v);$('playBtn').textContent=v?'Pausar música ⏸':'Poner música ▶️';clearInterval(heartTimer);clearInterval(photoTimer);clearInterval(filmTimer);if(v){for(let i=0;i<12;i++)setTimeout(()=>{if(playing)heart()},i*120);heartTimer=setInterval(heart,230);photoTimer=setInterval(nextPhoto,5200);filmTimer=setInterval(filmNext,3600)}}
-function playCurrent(){
- pendingPlay=true;
- if(!apiReady||!player){$('status').textContent='♪ Preparando nuestra canción...';return;}
- try {
-   player.loadVideoById({videoId:songs[index].id,startSeconds:0});
-   player.playVideo();
-   $('status').textContent='♪ Preparando nuestra canción...';
- } catch(e){showMusicFallback()}
+function setPlaying(v){if(v && !playing){for(let i=0;i<8;i++)setTimeout(heart,i*110)}playing=v;$('vinyl').classList.toggle('playing',v);$('arm').classList.toggle('playing',v);$('playBtn').textContent=v?'Pausar música ⏸':'Poner música ▶️';clearInterval(heartTimer);clearInterval(photoTimer);clearInterval(filmTimer);if(v){for(let i=0;i<12;i++)setTimeout(()=>{if(playing)heart()},i*120);heartTimer=setInterval(heart,230);photoTimer=setInterval(nextPhoto,5200);filmTimer=setInterval(filmNext,3600)}}
+// Un solo reproductor para los tres capítulos. Evita perder el gesto táctil
+// de Play al destruir y reconstruir iframes (especialmente en iPhone).
+let pendingPlay=false, requestedVideo=null, playerError=false;
+function createPlayer(){
+ if(player || !window.YT || !YT.Player)return;
+ player=new YT.Player('ytPlayer',{
+  height:'200',width:'200',videoId:songs[index].id,
+  playerVars:{playsinline:1,controls:0,rel:0,enablejsapi:1,origin:location.origin},
+  events:{
+   onReady:e=>{apiReady=true;requestedVideo=songs[index].id;
+     try{e.target.cueVideoById(songs[index].id)}catch(err){}
+     if(pendingPlay)startVideo();},
+   onStateChange:e=>{
+    if(e.data===YT.PlayerState.PLAYING){pendingPlay=false;playerError=false;setPlaying(true);$('status').textContent='♪ Nuestra canción'}
+    else if(e.data===YT.PlayerState.ENDED){setPlaying(false);$('status').textContent='♪ Fin de esta canción ♡'}
+    else if(e.data===YT.PlayerState.PAUSED && !pendingPlay){setPlaying(false)}
+   },
+   onError:e=>{console.warn('YouTube error',songs[index].id,e.data);playerError=true;pendingPlay=false;setPlaying(false);$('status').textContent='No se pudo reproducir esta canción ♡'}
+  }
+ });
 }
-function showMusicFallback(){pendingPlay=false;setPlaying(false);$('status').textContent='Esta canción no se puede reproducir aquí ♡'}
+function startVideo(){
+ if(!apiReady || !player)return;
+ const id=songs[index].id;
+ try{
+  // loadVideoById inicia la reproducción dentro del clic del usuario.
+  player.loadVideoById({videoId:id,startSeconds:0});
+  requestedVideo=id;
+  setPlaying(true);
+  $('status').textContent='♪ Preparando nuestra canción...';
+ }catch(e){console.warn(e);setPlaying(false)}
+}
+function playCurrent(){
+ pendingPlay=true;playerError=false;
+ if(!player)createPlayer();
+ if(apiReady)startVideo();
+ else {$('status').textContent='♪ Preparando nuestra canción...';}
+}
 function pause(){pendingPlay=false;if(player&&apiReady){try{player.pauseVideo()}catch(e){}}setPlaying(false);$('status').textContent=''}
-$('playBtn').onclick=()=>{if(playing)pause();else playCurrent()};
+$('playBtn').onclick=()=>playing?pause():playCurrent();
 function change(n){
- const target=Math.max(0,Math.min(2,index+n));
- if(target===index)return;
- const continueMusic=playing||pendingPlay;
- pendingPlay=false;
- setPlaying(false);
- if(player&&apiReady){try{player.stopVideo()}catch(e){}}
- index=target;render();
- if(player&&apiReady){
-  try{player.cueVideoById({videoId:songs[index].id,startSeconds:0})}catch(e){}
- }
+ const target=Math.max(0,Math.min(2,index+n));if(target===index)return;
+ pause();index=target;render();
+ // Dejar preparado el vídeo siguiente sin forzar autoplay.
+ if(player&&apiReady){try{player.cueVideoById(songs[index].id);requestedVideo=songs[index].id}catch(e){}}
  $('status').textContent='';
- if(continueMusic)playCurrent();
 }
 $('prev').onclick=()=>change(-1);$('next').onclick=()=>change(1);
 $('surpriseBtn').onclick=()=>{pause();show('letterScreen')};
 $('openLetter').onclick=()=>{$('openLetter').style.display='none';$('letter').classList.add('open');$('questionBtn').hidden=false};
 $('questionBtn').onclick=()=>show('questionScreen');
 function answer(which){$('answerTitle').textContent=which===1?'¿UNO NOMÁS? 😭':'¡PREMIO MAYOR! 🏆❤️';$('answerText').textContent=which===1?'Después de semejante producción... acepto. Pero que sea uno de esos que duran bastante. 😏❤️':'Sabía que invertir en tecnología romántica daría resultados. Procederé a cobrar mis besitos personalmente. 😎❤️';show('ending');for(let i=0;i<65;i++)setTimeout(heart,i*55)}
-$('choice1').onclick=()=>answer(1);$('choice2').onclick=()=>answer(2);$('replay').onclick=()=>{index=0;render();show('music')};
-window.onYouTubeIframeAPIReady=function(){try{player=new YT.Player('ytPlayer',{height:'240',width:'240',videoId:songs[0].id,playerVars:{playsinline:1,controls:0,rel:0,enablejsapi:1,origin:location.protocol.startsWith('http')?location.origin:undefined},events:{onReady:()=>{apiReady=true;if(pendingPlay){try{player.loadVideoById(songs[index].id);player.playVideo();$('status').textContent='♪ Nuestra canción'}catch(e){showMusicFallback()}}},onStateChange:e=>{if(e.data===YT.PlayerState.PLAYING){pendingPlay=false;setPlaying(true);$('status').textContent='♪ Nuestra canción';}else if(e.data===YT.PlayerState.ENDED){pause();$('status').textContent='♪ Fin de esta canción ♡'}else if(e.data===YT.PlayerState.PAUSED&&playing){setPlaying(false)}},onError:e=>{console.warn("YouTube embed error",songs[index].id,e.data);showMusicFallback()}}})}catch(e){showMusicFallback()}};
-// Si la API está bloqueada por el navegador, ofrecer acceso alternativo sin detener las fotos.
-setTimeout(()=>{if(!apiReady&&pendingPlay)showMusicFallback()},9000);
+$('choice1').onclick=()=>answer(1);$('choice2').onclick=()=>answer(2);$('replay').onclick=()=>{pause();index=0;render();if(player&&apiReady)player.cueVideoById(songs[0].id);show('music')};
+window.onYouTubeIframeAPIReady=function(){createPlayer()};
+
 render();
 </script><script src="https://www.youtube.com/iframe_api" async></script></body></html>
